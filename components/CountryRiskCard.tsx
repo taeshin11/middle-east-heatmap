@@ -12,70 +12,100 @@ interface Country {
   last_updated: string
 }
 
-const tierColors = {
-  critical: { border: 'border-red-700', badge: 'bg-red-900 text-red-200', score: 'text-red-400' },
-  high: { border: 'border-orange-700', badge: 'bg-orange-900 text-orange-200', score: 'text-orange-400' },
-  medium: { border: 'border-yellow-700', badge: 'bg-yellow-900 text-yellow-200', score: 'text-yellow-400' },
-  low: { border: 'border-green-700', badge: 'bg-green-900 text-green-200', score: 'text-green-400' },
+const tierTopGradient: Record<string, string> = {
+  critical: 'bg-gradient-to-r from-red-500 to-red-600',
+  high: 'bg-gradient-to-r from-orange-500 to-orange-600',
+  medium: 'bg-gradient-to-r from-yellow-500 to-yellow-600',
+  low: 'bg-gradient-to-r from-green-500 to-green-600',
+}
+
+const tierBadge: Record<string, string> = {
+  critical: 'bg-red-500/10 text-red-600 ring-1 ring-inset ring-red-500/20',
+  high: 'bg-orange-500/10 text-orange-600 ring-1 ring-inset ring-orange-500/20',
+  medium: 'bg-yellow-500/10 text-yellow-700 ring-1 ring-inset ring-yellow-500/20',
+  low: 'bg-green-500/10 text-green-600 ring-1 ring-inset ring-green-500/20',
+}
+
+const riskScoreColor: Record<string, string> = {
+  critical: 'text-red-600',
+  high: 'text-orange-500',
+  medium: 'text-yellow-600',
+  low: 'text-green-600',
 }
 
 const threatBadgeColors: Record<string, string> = {
-  missile: 'bg-red-900 text-red-200',
-  airstrike: 'bg-orange-900 text-orange-200',
-  maritime: 'bg-blue-900 text-blue-200',
-  drone: 'bg-purple-900 text-purple-200',
-  ground: 'bg-gray-700 text-gray-200',
+  missile: 'bg-red-500/10 text-red-600 ring-1 ring-inset ring-red-500/20',
+  airstrike: 'bg-orange-500/10 text-orange-600 ring-1 ring-inset ring-orange-500/20',
+  maritime: 'bg-blue-500/10 text-blue-600 ring-1 ring-inset ring-blue-500/20',
+  drone: 'bg-purple-500/10 text-purple-600 ring-1 ring-inset ring-purple-500/20',
+  ground: 'bg-slate-500/10 text-slate-600 ring-1 ring-inset ring-slate-500/20',
+}
+
+const sparklineColor: Record<string, string> = {
+  critical: '#ef4444',
+  high: '#f97316',
+  medium: '#eab308',
+  low: '#22c55e',
 }
 
 export default function CountryRiskCard({ country }: { country: Country }) {
-  const colors = tierColors[country.risk_tier]
-  const trendArrow = country.trend === 'worsening' ? '▲' : country.trend === 'improving' ? '▼' : '→'
-  const trendColor = country.trend === 'worsening' ? 'text-red-400' : country.trend === 'improving' ? 'text-green-400' : 'text-gray-400'
-
   const sparkline = {
-    grid: { top: 0, right: 0, bottom: 0, left: 0 },
+    grid: { top: 2, right: 2, bottom: 2, left: 2 },
     xAxis: { show: false, type: 'category' as const, data: country['7_day_scores'].map((_: number, i: number) => i) },
     yAxis: { show: false, type: 'value' as const, min: Math.min(...country['7_day_scores']) - 0.5, max: 10 },
-    series: [{ type: 'line' as const, data: country['7_day_scores'], smooth: true, symbol: 'none', lineStyle: { color: country.risk_tier === 'critical' ? '#ef4444' : '#f97316', width: 2 }, areaStyle: { color: 'rgba(239,68,68,0.1)' } }]
+    series: [{
+      type: 'line' as const,
+      data: country['7_day_scores'],
+      smooth: true,
+      symbol: 'none',
+      lineStyle: { color: sparklineColor[country.risk_tier], width: 2.5 },
+      areaStyle: { color: `${sparklineColor[country.risk_tier]}20` }
+    }]
   }
 
   return (
-    <div className={`rounded-lg border ${colors.border} bg-gray-900 p-4 hover:bg-gray-800 transition-colors`}>
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <span className="text-3xl">{country.flag}</span>
-          <h3 className="font-bold text-white text-lg mt-1">{country.name}</h3>
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group">
+      {/* Color-coded top border */}
+      <div className={`h-1.5 ${tierTopGradient[country.risk_tier]}`}></div>
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{country.flag}</span>
+            <div>
+              <h3 className="font-black text-slate-900 text-lg group-hover:text-orange-600 transition-colors leading-tight">{country.name}</h3>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase mt-1 inline-block ${tierBadge[country.risk_tier]}`}>
+                {country.risk_tier}
+              </span>
+            </div>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <div className={`text-4xl font-black ${riskScoreColor[country.risk_tier]}`}>{country.risk_score.toFixed(1)}</div>
+            <div className="text-xs text-slate-400">/10</div>
+          </div>
         </div>
-        <div className="text-right">
-          <p className={`text-4xl font-black ${colors.score}`}>{country.risk_score.toFixed(1)}</p>
-          <p className={`text-sm font-bold ${trendColor}`}>{trendArrow}</p>
+
+        {/* Threat badges row */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {country.threat_badges?.map(badge => (
+            <span key={badge} className={`text-xs px-2 py-0.5 rounded-full font-semibold ${threatBadgeColors[badge] ?? 'bg-slate-100 text-slate-600'}`}>{badge}</span>
+          ))}
         </div>
+
+        {/* 7-day sparkline */}
+        <div className="h-12 mb-4">
+          <ReactECharts option={sparkline} style={{ height: '100%', width: '100%' }} opts={{ renderer: 'svg' }} />
+        </div>
+
+        {/* Recent incident */}
+        <div className="bg-slate-50 rounded-lg p-3 text-xs mb-3">
+          <span className="font-semibold text-slate-700">Latest: </span>
+          <span className="text-slate-600">{country.recent_incident?.summary}</span>
+        </div>
+
+        <Link href={`/country/${country.slug}`} className="text-xs text-orange-600 hover:text-orange-800 font-semibold transition-colors">
+          Full analysis →
+        </Link>
       </div>
-
-      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold uppercase ${colors.badge}`}>
-        {country.risk_tier}
-      </span>
-
-      <div className="my-2 h-12">
-        <ReactECharts option={sparkline} style={{ height: '100%', width: '100%' }} opts={{ renderer: 'svg' }} />
-      </div>
-
-      <div className="flex flex-wrap gap-1 mb-2">
-        {country.threat_badges.map(b => (
-          <span key={b} className={`text-xs px-2 py-0.5 rounded-full ${threatBadgeColors[b] || 'bg-gray-700 text-gray-300'}`}>{b}</span>
-        ))}
-      </div>
-
-      <p className="text-xs text-gray-400 mb-2 line-clamp-2">{country.description}</p>
-
-      <div className="bg-gray-800 rounded p-2 mb-2">
-        <p className="text-xs text-gray-500 mb-0.5">{country.recent_incident.date}</p>
-        <p className="text-xs text-gray-300 line-clamp-2">{country.recent_incident.summary}</p>
-      </div>
-
-      <Link href={`/country/${country.slug}`} className="text-xs text-blue-400 hover:underline">
-        Full analysis →
-      </Link>
     </div>
   )
 }
