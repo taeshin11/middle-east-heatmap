@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import Link from 'next/link'
 import VisitorCounter from '@/components/VisitorCounter'
+import { FeedbackButton } from '@/components/FeedbackButton'
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -35,6 +36,25 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "Middle East Heatmap",
+              "url": "https://middle-east-heatmap.vercel.app",
+              "description": "Visual heatmap of conflict intensity and security risk levels across the Middle East and North Africa",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Middle East Heatmap",
+                "url": "https://middle-east-heatmap.vercel.app"
+              }
+            })
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <header className="bg-slate-900 text-white sticky top-0 z-50 border-b border-slate-700/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -80,6 +100,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </footer>
+        <FeedbackButton siteName="Middle East Heatmap" siteUrl="https://middle-east-heatmap.vercel.app" />
       </body>
     </html>
   );
