@@ -48,7 +48,7 @@ const sparklineColor: Record<string, string> = {
   low: '#22c55e',
 }
 
-export default function CountryRiskCard({ country }: { country: Country }) {
+export default function CountryRiskCard({ country, locale }: { country: Country; locale?: string }) {
   const sparkline = {
     grid: { top: 2, right: 2, bottom: 2, left: 2 },
     xAxis: { show: false, type: 'category' as const, data: country['7_day_scores'].map((_: number, i: number) => i) },
@@ -102,7 +102,7 @@ export default function CountryRiskCard({ country }: { country: Country }) {
           <span className="text-slate-600">{country.recent_incident?.summary}</span>
         </div>
 
-        <Link href={`/country/${country.slug}`} className="text-xs text-orange-600 hover:text-orange-800 font-semibold transition-colors">
+        <Link href={locale ? `/${locale}/country/${country.slug}` : `/country/${country.slug}`} className="text-xs text-orange-600 hover:text-orange-800 font-semibold transition-colors">
           Full analysis →
         </Link>
       </div>

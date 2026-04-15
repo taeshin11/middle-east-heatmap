@@ -1,25 +1,39 @@
 import fs from 'fs'
 import path from 'path'
+import { setRequestLocale, getTranslations } from 'next-intl/server'
+import { routing } from '@/i18n/routing'
 import CountryRiskCard from '@/components/CountryRiskCard'
 
-export const metadata = {
-  title: 'Middle East Heatmap | Real-Time Conflict Intelligence',
-  description: 'Visual heatmap of conflict intensity and security risk levels across the Middle East and North Africa region',
-  keywords: 'Middle East conflict, MENA security, regional tensions, Middle East risk, conflict heatmap, Arab world',
+export function generateStaticParams() {
+  return routing.locales.map(locale => ({ locale }))
 }
 
 interface Country {
   id: string
   risk_score: number
-  risk_tier: string
+  risk_tier: 'critical' | 'high' | 'medium' | 'low'
+  slug: string
+  name: string
+  flag: string
+  prev_score: number
+  trend: string
+  '7_day_scores': number[]
+  threat_badges: string[]
+  description: string
+  recent_incident: { date: string; summary: string; source: string; source_url: string }
+  last_updated: string
 }
 
-export default function HomePage() {
-  const countries = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public/data/countries.json'), 'utf8'))
-  const sorted = [...countries].sort((a: Country, b: Country) => b.risk_score - a.risk_score)
-  const criticalCount = countries.filter((c: Country) => c.risk_tier === 'critical').length
-  const highCount = countries.filter((c: Country) => c.risk_tier === 'high').length
-  const avgScore = (countries.reduce((s: number, c: Country) => s + c.risk_score, 0) / countries.length).toFixed(1)
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
+  const t = await getTranslations()
+
+  const countries: Country[] = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public/data/countries.json'), 'utf8'))
+  const sorted = [...countries].sort((a, b) => b.risk_score - a.risk_score)
+  const criticalCount = countries.filter(c => c.risk_tier === 'critical').length
+  const highCount = countries.filter(c => c.risk_tier === 'high').length
+  const avgScore = (countries.reduce((s, c) => s + c.risk_score, 0) / countries.length).toFixed(1)
 
   return (
     <div>
@@ -58,8 +72,8 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 py-10">
         <h2 className="text-xl font-bold text-slate-900 mb-5">Country Risk Cards</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {sorted.map((c: { id: string; slug: string; name: string; flag: string; risk_score: number; prev_score: number; risk_tier: 'critical' | 'high' | 'medium' | 'low'; trend: string; '7_day_scores': number[]; threat_badges: string[]; description: string; recent_incident: { date: string; summary: string; source: string; source_url: string }; last_updated: string }) => (
-            <CountryRiskCard key={c.id} country={c} />
+          {sorted.map(c => (
+            <CountryRiskCard key={c.id} country={c} locale={locale} />
           ))}
         </div>
       </div>
